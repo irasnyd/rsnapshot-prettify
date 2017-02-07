@@ -25,6 +25,12 @@ def mkdir_p(directory):
 
 def symlink(src, dst):
     '''Wrapper around os.symlink() that fixes up any errors automatically'''
+    # skip existing symbolic link with the correct target
+    if os.path.islink(dst):
+        target = os.readlink(dst)
+        if target == src:
+            return
+
     try:
         os.symlink(src, dst)
     except OSError, ex:
@@ -72,18 +78,6 @@ def pretty_name_from_path(args, path):
 
     return output_path
 
-def symlink_is_up_to_date(src, dst):
-    '''Check to see if a symlink already exists and has the expected target'''
-    # ignore things which are not symbolic links
-    if not os.path.islink(src):
-        return True
-
-    # get symlink target
-    target_path = os.readlink(src)
-
-    # both the actual and expected target must match
-    return target_path == dst
-
 def prettify(args):
     '''Actually perform the prettification of the rsnapshot directory structure'''
     # get each snapshot name: hourly.0, hourly.1, ..., daily.0, ...
@@ -101,10 +95,6 @@ def prettify(args):
             backup_path = abspath(os.path.join(snapshot_path, backup_name))
 
             output_path = pretty_name_from_path(args, backup_path)
-
-            # skip link creation if the symlink already exists and is up to date
-            if symlink_is_up_to_date(backup_path, output_path):
-                continue
 
             # create the directory and symlink it
             if args.dry_run:
