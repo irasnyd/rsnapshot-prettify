@@ -115,29 +115,35 @@ def prettify(args):
                 symlink(backup_path, output_path)
 
     # cleanup output directory
-    for symlink_name in listdir(args.output_directory):
-        symlink_path = abspath(os.path.join(args.output_directory, symlink_name))
+    for machine_name in listdir(args.output_directory):
+        # calculate the full path to the machine
+        machine_path = abspath(os.path.join(args.output_directory, machine_name))
 
-        # skip things which are not symbolic links
-        if not os.path.islink(symlink_path):
-            continue
+        # get each snapshot symlink within the machine
+        for snapshot_name in listdir(machine_path):
+            # calculate the full path to the snapshot
+            snapshot_path = os.path.join(machine_path, snapshot_name)
 
-        # get symlink target
-        target_path = os.readlink(symlink_path)
+            # skip things which are not symbolic links
+            if not os.path.islink(snapshot_path):
+                continue
 
-        # calculate expected symlink name
-        output_path = pretty_name_from_path(args, target_path)
+            # get symlink target
+            target_path = os.readlink(snapshot_path)
 
-        # if the symlink target and the expected target match,
-        # then this is up to date and we can skip it
-        if symlink_path == output_path:
-            continue
+            # calculate expected symlink name
+            output_path = pretty_name_from_path(args, target_path)
 
-        # they are out of date, we need to unlink
-        if args.dry_run:
-            print 'rm', symlink_path
-        else:
-            os.unlink(symlink_path)
+            # if the symlink target and the expected target match,
+            # then this is up to date and we can skip it
+            if snapshot_path == output_path:
+                continue
+
+            # they are out of date, we need to unlink
+            if args.dry_run:
+                print 'rm', snapshot_path
+            else:
+                os.unlink(snapshot_path)
 
 def main():
     '''Main entrypoint'''
