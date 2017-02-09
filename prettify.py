@@ -94,7 +94,12 @@ def prettify(args):
             # calculate the full path to the backup
             backup_path = abspath(os.path.join(snapshot_path, backup_name))
 
+            # calculate the pretty symlink name
             output_path = pretty_name_from_path(args, backup_path)
+
+            # for NFS mounts, prefix the symlink target with an extra path
+            if args.prefix:
+                backup_path = args.prefix + backup_path
 
             # create the directory and symlink it
             if args.dry_run:
@@ -121,6 +126,10 @@ def prettify(args):
             # get symlink target
             target_path = os.readlink(snapshot_path)
 
+            # for NFS mounts, remove the prefix from the symlink target
+            if args.prefix:
+                target_path = target_path.replace(args.prefix, '', 1)
+
             # calculate expected symlink name
             output_path = pretty_name_from_path(args, target_path)
 
@@ -142,6 +151,7 @@ def main():
     parser.add_argument('-n', '--dry-run', action='store_true', help='Do not perform any action (test mode)')
     parser.add_argument('-i', '--input-directory', '--snapshot-root', required=True, help='Rsnapshot snapshot_root directory')
     parser.add_argument('-o', '--output-directory', required=True, help='Output directory for symlinks')
+    parser.add_argument('-p', '--prefix', help='Prepend this to the symlink targets (for NFS mounts)', default='')
     args = parser.parse_args()
 
     # make sure to use absolute paths, it makes the rest of the code easier
