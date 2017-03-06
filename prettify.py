@@ -130,13 +130,16 @@ def prettify(args):
             if args.prefix:
                 target_path = target_path.replace(args.prefix, '', 1)
 
-            # calculate expected symlink name
-            output_path = pretty_name_from_path(args, target_path)
+            # check to see if the target even exists anymore
+            # if it does not, we will just skip to removing it automatically
+            if os.path.exists(target_path):
+                # calculate expected symlink name
+                output_path = pretty_name_from_path(args, target_path)
 
-            # if the symlink target and the expected target match,
-            # then this is up to date and we can skip it
-            if snapshot_path == output_path:
-                continue
+                # if the symlink target and the expected target match,
+                # then this is up to date and we can skip it
+                if snapshot_path == output_path:
+                    continue
 
             # they are out of date, we need to unlink
             if args.dry_run:
